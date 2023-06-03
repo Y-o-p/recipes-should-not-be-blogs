@@ -15,3 +15,4 @@ html2text = "0.5.1"
 openai = "1.0.0-alpha.8"
 dotenvy = "0.15.7"
 serde_json = "1.0.96"
+clap = { version = "4.3.1", features = ["derive"] }

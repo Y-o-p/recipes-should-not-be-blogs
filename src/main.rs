@@ -21,6 +21,7 @@ use openai::{
     chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
     set_key,
 };
+use clap::Parser;
 
 const FOOD_NUM_ELEMENTS: usize = 12;
 
@@ -75,10 +76,10 @@ struct Nutrients {
     value: f32
 }
 
-fn remove_html(text: String) {
-    //let plain_text = html2text::from_read(text.as_bytes(), 100).to_string();
+fn remove_html(text: String) -> String {
+    let plain_text = html2text::from_read(text.as_bytes(), 100).to_string();
     let reg = Regex::new(r#"<[^<]*>|\[.*\]|(https?:\/\/(www\.)?)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)|[@#$%^&*\[\]\(\)\\=+_\|]"#).unwrap();
-    reg.replace_all(&text, "");
+    reg.replace_all(&plain_text, "").to_string()
 }
 
 async fn get_directions_and_ingredients(recipe: String) -> String {
@@ -91,7 +92,9 @@ async fn get_directions_and_ingredients(recipe: String) -> String {
     };
     let chat_completion = ChatCompletion::builder("gpt-3.5-turbo", vec!(message))
         .create()
-        .await.unwrap().unwrap();
+        .await
+        .unwrap()
+        .unwrap();
     
     chat_completion.choices.first()
         .unwrap()
@@ -100,25 +103,34 @@ async fn get_directions_and_ingredients(recipe: String) -> String {
         .content
 }
 
+#[derive(Parser)]
+struct Args {
+    url: String,
+    
+    #[arg(short, long, default_value_t = String::from("./recipe.md"))]
+    output_path: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Get command line arguments
+    let args = Args::parse();
+    
+    // Get environment variables
     dotenv().unwrap();
     set_key(env::var("OPENAI_KEY").unwrap());
-    set_key(env::var("API_NINJAS_KEY").unwrap());
+    
     let client = reqwest::Client::new();
-
-    let html = client.get("https://www.delish.com/cooking/recipe-ideas/a19636089/creamy-tuscan-chicken-recipe/")
+    let html = client.get(args.url)
         .send()
         .await?
         .text()
         .await?;
-        
     let recipe = remove_html(html);
 
-    let myfile = fs::read_to_string("text")?;
-    //println!("{}", myfile);
-
-    let mut new_file = File::create("newfile.md")?;
+    //let myfile = fs::read_to_string("text")?;
+    let myfile = get_directions_and_ingredients(recipe).await;
+    let mut new_file = File::create(args.output_path)?;
     
     // Get each of the ingredients
     let find_ingredients = Regex::new(r#"-.*"#).unwrap();
