@@ -1,3 +1,3 @@
-struct Table {
-    elements: array2
+pub trait Markdown {
+    fn as_markdown(&self) -> String;
 }
