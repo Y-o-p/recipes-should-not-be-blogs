@@ -22,7 +22,7 @@ use markdown::Markdown;
 struct Args {
     url: String,
     
-    #[arg(short, long, default_value_t = String::from("./recipe.md"))]
+    #[arg(short, long, default_value_t = String::from("./output/recipe.md"))]
     output_path: String,
 }
 
@@ -41,10 +41,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut recipe_file = File::create(&args.output_path)?;
     recipe_file.write_all(recipe.as_markdown().as_bytes());
 
-    let mut website_file = File::create("website")?;
+    let mut website_file = File::create("output/website.txt")?;
     website_file.write_all(recipe.website.plaintext.as_bytes());
 
-    let mut chatgpt_file = File::create("chatgptresponse")?;
+    let mut chatgpt_file = File::create("output/chatgptresponse.txt")?;
     chatgpt_file.write_all(recipe.chatgpt_response.as_bytes());
 
     Ok(())

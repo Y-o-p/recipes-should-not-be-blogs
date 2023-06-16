@@ -18,6 +18,7 @@ use std::{
     error::Error,
     collections::HashMap,
     env,
+    fs,
 };
 use serde_json::Value;
 use regex::Regex;
@@ -39,10 +40,10 @@ pub struct Food {
     nf_sodium: f32,
     nf_total_carbohydrate: f32,
     nf_dietary_fiber: f32,
-    nf_sugars: f32,
+    nf_sugars: Value,
     nf_protein: f32,
-    nf_potassium: f32,
-    nf_p: f32,
+    nf_potassium: Value,
+    nf_p: Value,
     full_nutrients: Vec<Nutrients>,
     nix_brand_name: Value,
     nix_brand_id: Value,
@@ -73,7 +74,7 @@ struct NutritionResponse {
 #[derive(Serialize, Deserialize)]
 pub struct Nutrients {
     attr_id: u32,
-    value: f32
+    value: Value
 }
 
 pub struct Recipe {
@@ -107,7 +108,8 @@ impl Recipe {
         // Prompt ChatGPT to get the directions and ingredients
         let key = env::var("OPENAI_KEY")?;
         let client = ChatGPT::new(key)?;
-        let message = format!("What is the list of ingredients and the directions of this recipe?:\n{}", self.website.plaintext);
+        let prompt = fs::read_to_string("prompt").expect("prompt expected");
+        let message = format!("{}\n{}", prompt, self.website.plaintext);
         let chatgpt_response = client.send_message(message).await?;
         self.chatgpt_response = chatgpt_response.message()
             .content
@@ -120,10 +122,11 @@ impl Recipe {
         }
 
         // Parse the ingredients
-        let find_ingredients = Regex::new(r#"-.*"#).unwrap();
+        let find_ingredients = Regex::new(r#"\*.*"#).unwrap();
         let mut ingredients_as_str = String::new();
         for ingredient in find_ingredients.captures_iter(self.chatgpt_response.as_str()) {
-            ingredients_as_str.push_str(&format!("{}\n", ingredient.get(0).unwrap().as_str())[..]);
+            println!("{}", ingredient.get(0).unwrap().as_str());
+            ingredients_as_str.push_str(&format!("{}, and\n", ingredient.get(0).unwrap().as_str())[..]);
         }
 
         // Send the ingredients to nutritionIX
@@ -148,7 +151,7 @@ impl Recipe {
         let response_as_str: String = response.text().await?;
 
         // Deserialize the JSON into Rust structs
-        let data: NutritionResponse = serde_json::from_str(response_as_str.as_str())?;
+        let data: NutritionResponse = serde_json::from_str(response_as_str.as_str()).expect(response_as_str.as_str());
         self.ingredients = data.foods;
 
         Ok(())
