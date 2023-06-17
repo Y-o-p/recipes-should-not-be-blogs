@@ -1,5 +1,6 @@
 +++
 title = "Tofu recipe"
+template = "page.html"
 date = 2023-06-16
 +++
 
