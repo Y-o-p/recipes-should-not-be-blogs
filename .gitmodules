@@ -2,3 +2,4 @@
 	path = rsnbb/themes/anatole-zola
 	url = https://github.com/Y-o-p/anatole-zola.git
 	ignore = dirty
+	branch = main
