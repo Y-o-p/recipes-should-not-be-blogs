@@ -22,7 +22,7 @@ use markdown::Markdown;
 struct Args {
     url: String,
     
-    #[arg(short, long, default_value_t = String::from("./output/recipe.md"))]
+    #[arg(short, long, default_value_t = String::from("./"))]
     output_path: String,
 
     #[arg(short, long, default_value_t = false)]
@@ -59,7 +59,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         recipe_text.insert_str(0, header.as_str());
     }
 
-    let mut recipe_file = File::create(&args.output_path)?;
+    let mut full_path: String = String::from(args.output_path.as_str());
+    full_path.push_str(format!("{}.md", recipe.title.as_str()).as_str());
+
+    
+    let mut recipe_file = File::create(&full_path.as_str())?;
     recipe_file.write_all(recipe_text.as_bytes());
 
     let mut website_file = File::create("output/website.txt")?;
