@@ -1,5 +1,6 @@
-Give me the list of ingredients and the directions from the recipe strictly following this format
+Give me the title, list of ingredients (use asterisks to list ingredients), and the directions from the recipe strictly following this format
 Format desired:
+Title: recipe title
 * ingredient 1
 * ingredient 2
 1. step 1

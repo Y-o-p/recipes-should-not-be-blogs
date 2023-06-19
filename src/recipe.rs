@@ -22,6 +22,11 @@ use std::{
 };
 use serde_json::Value;
 use regex::Regex;
+use chrono::{
+    DateTime,
+    Local,
+    prelude,
+};
 
 use crate::webscraper::Website;
 use crate::markdown::Markdown;
@@ -79,6 +84,8 @@ pub struct Nutrients {
 
 pub struct Recipe {
     pub website: Website,
+    pub title: String,
+    pub date: DateTime<Local>,
     pub ingredients: Vec<Food>,
     pub directions: Vec<String>,
     pub chatgpt_response: String,
@@ -88,6 +95,8 @@ impl Recipe {
     pub fn new(website: Website) -> Recipe {
         Recipe {
             website: website,
+            title: String::new(),
+            date: prelude::Local::now(),
             ingredients: Vec::new(),
             directions: Vec::new(),
             chatgpt_response: String::new(),
@@ -114,6 +123,16 @@ impl Recipe {
         self.chatgpt_response = chatgpt_response.message()
             .content
             .clone();
+
+        println!("CHATGPT: {}", self.chatgpt_response.as_str());
+
+        // Parse the title
+        let find_title = Regex::new(r#"Title:.*"#).unwrap();
+        for title in find_title.captures_iter(self.chatgpt_response.as_str()) {
+            self.title = String::from(title.get(0).unwrap().as_str()).replace("Title: ", "");
+        }
+        println!("{}", self.title);
+
 
         // Parse the directions
         let find_directions = Regex::new(r#"[1-9]\..*"#).unwrap();
@@ -153,6 +172,9 @@ impl Recipe {
         // Deserialize the JSON into Rust structs
         let data: NutritionResponse = serde_json::from_str(response_as_str.as_str()).expect(response_as_str.as_str());
         self.ingredients = data.foods;
+
+        // Get the date
+        self.date = chrono::offset::Local::now();
 
         Ok(())
     }

@@ -24,6 +24,9 @@ struct Args {
     
     #[arg(short, long, default_value_t = String::from("./output/recipe.md"))]
     output_path: String,
+
+    #[arg(short, long, default_value_t = false)]
+    website: bool,
 }
 
 #[tokio::main]
@@ -38,8 +41,26 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let recipe_website: Website = Website::from_scrape(url).await?;
     let recipe: Recipe = Recipe::from_get(recipe_website).await?;
     
+    let mut recipe_text = recipe.as_markdown();
+
+    if args.website {
+        let date: String = format!("{}", recipe.date.format("%Y-%m-%d"));
+        
+        let header: String = format!(
+            "+++\n\
+            title = \"{}\"\n\
+            template = \"page.html\"\n\
+            date = {}\n\
+            +++\n", 
+            recipe.title,
+            date
+        );
+
+        recipe_text.insert_str(0, header.as_str());
+    }
+
     let mut recipe_file = File::create(&args.output_path)?;
-    recipe_file.write_all(recipe.as_markdown().as_bytes());
+    recipe_file.write_all(recipe_text.as_bytes());
 
     let mut website_file = File::create("output/website.txt")?;
     website_file.write_all(recipe.website.plaintext.as_bytes());
