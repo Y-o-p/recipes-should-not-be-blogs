@@ -49,7 +49,6 @@ impl Website {
             .text()
             .await?;
         self.regex_remove(r#"<[^<]*>|\[.*\]|(https?:\/\/(www\.)?)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)|[@#$%^&*\[\]\(\)\\=+_\|]"#);
-        println!("{}", self.plaintext);
 
         Ok(())
     }

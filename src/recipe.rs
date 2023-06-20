@@ -117,6 +117,7 @@ impl Recipe {
         }
 
         // Prompt ChatGPT to get the directions and ingredients
+        println!("Prompting CHATGPT...");
         let key = env::var("OPENAI_KEY")?;
         let client = ChatGPT::new(key)?;
         let prompt = fs::read_to_string("prompt").expect("prompt expected");
@@ -125,33 +126,33 @@ impl Recipe {
         self.chatgpt_response = chatgpt_response.message()
             .content
             .clone();
-
-        println!("CHATGPT: {}", self.chatgpt_response.as_str());
+        println!("Success!");
 
         // Parse the title
         let find_title = Regex::new(r#"Title:.*"#).unwrap();
         for title in find_title.captures_iter(self.chatgpt_response.as_str()) {
             self.title = String::from(title.get(0).unwrap().as_str()).replace("Title: ", "");
         }
-        println!("{}", self.title);
-
+        println!("Found recipe titled: {}", self.title);
 
         // Parse the directions
         let find_directions = Regex::new(r#"[1-9]\..*"#).unwrap();
         for direction in find_directions.captures_iter(self.chatgpt_response.as_str()) {
             self.directions.push(String::from(direction.get(0).unwrap().as_str()));
         }
+        println!("# of Directions: {}", self.directions.len());
 
         // Parse the ingredients
         let find_ingredients = Regex::new(r#"\*.*"#).unwrap();
         let mut ingredients_as_str = String::new();
         for ingredient in find_ingredients.captures_iter(self.chatgpt_response.as_str()) {
-            println!("{}", ingredient.get(0).unwrap().as_str());
             self.ingredients.push(String::from(ingredient.get(0).unwrap().as_str()));
             ingredients_as_str.push_str(&format!("{}, and\n", &self.ingredients.last().expect("Expected ingredient").as_str())[..]);
         }
+        println!("# of Ingredients: {}", self.ingredients.len());
 
         // Send the ingredients to nutritionIX
+        println!("Prompting NutritionIX...");
         let url = Url::parse("https://trackapi.nutritionix.com/v2/natural/nutrients")?;
         let nutrition_app_id = env::var("NUTRITIONIX_APP_ID")?;
         let nutrition_app_key = env::var("NUTRITIONIX_APP_KEY")?;
@@ -171,10 +172,13 @@ impl Recipe {
 
         let response = request_builder.send().await?;
         let response_as_str: String = response.text().await?;
+        println!("Success!");
 
         // Deserialize the JSON into Rust structs
+        println!("Deserializing JSON from NutritionIX...");
         let data: NutritionResponse = serde_json::from_str(response_as_str.as_str()).expect(response_as_str.as_str());
         self.nutrients = data.foods;
+        println!("Success!");
 
         // Get the date
         self.date = chrono::offset::Local::now();

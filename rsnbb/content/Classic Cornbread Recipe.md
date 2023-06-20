@@ -13,13 +13,12 @@ date = 2023-06-19
 * 1 cup buttermilk
 * 1/2 cup unsalted butter, melted and cooled
 * 2 large eggs
-1. Preheat the oven to 400°F (200°C). Grease an 8-inch square baking dish with cooking spray.
-2. In a large mixing bowl, whisk together the flour, cornmeal, sugar, baking powder, baking soda, and salt.
-3. In a separate bowl, whisk together the buttermilk, melted butter, and eggs.
+1. Preheat oven to 400°F (200°C). Grease a 9-inch square baking pan.
+2. In a large mixing bowl, combine flour, cornmeal, sugar, baking powder, baking soda, and salt.
+3. In a separate bowl, whisk together buttermilk, melted butter, and eggs.
 4. Pour the wet ingredients into the dry ingredients and stir until just combined.
-5. Pour the batter into the prepared baking dish and smooth out the top.
-6. Bake for 20-25 minutes, or until a toothpick inserted into the center of the cornbread comes out clean.
-7. Allow the cornbread to cool in the pan for 5 minutes before slicing and serving. Enjoy!
+5. Pour the batter into the prepared pan and bake for 20-25 minutes or until a toothpick inserted into the center comes out clean.
+6. Allow the cornbread to cool in the pan for 5 minutes before slicing and serving. Enjoy!
 
 | INGREDIENT | CALORIES | PROTEIN | CARBS | FAT |
 | - | - | - | - | - |
