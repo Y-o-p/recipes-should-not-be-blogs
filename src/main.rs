@@ -38,7 +38,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().unwrap();
     
     let url: Url = Url::parse(args.url.as_str()).expect("Faulty URL");
-    let recipe_website: Website = Website::from_scrape(url).await?;
+    let mut recipe_website: Website = Website::from_scrape(url).await?;
+    recipe_website.regex_remove(r#"(comments)|(COMMENTS)|(Comments)[\s\S]*"#);
     let recipe: Recipe = Recipe::from_get(recipe_website).await?;
     
     let mut recipe_text = recipe.as_markdown();
@@ -61,7 +62,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut full_path: String = String::from(args.output_path.as_str());
     full_path.push_str(format!("{}.md", recipe.title.as_str()).as_str());
-
     
     let mut recipe_file = File::create(&full_path.as_str())?;
     recipe_file.write_all(recipe_text.as_bytes());

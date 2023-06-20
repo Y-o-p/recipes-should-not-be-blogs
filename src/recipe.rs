@@ -86,7 +86,8 @@ pub struct Recipe {
     pub website: Website,
     pub title: String,
     pub date: DateTime<Local>,
-    pub ingredients: Vec<Food>,
+    pub nutrients: Vec<Food>,
+    pub ingredients: Vec<String>,
     pub directions: Vec<String>,
     pub chatgpt_response: String,
 }
@@ -97,6 +98,7 @@ impl Recipe {
             website: website,
             title: String::new(),
             date: prelude::Local::now(),
+            nutrients: Vec::new(),
             ingredients: Vec::new(),
             directions: Vec::new(),
             chatgpt_response: String::new(),
@@ -145,7 +147,8 @@ impl Recipe {
         let mut ingredients_as_str = String::new();
         for ingredient in find_ingredients.captures_iter(self.chatgpt_response.as_str()) {
             println!("{}", ingredient.get(0).unwrap().as_str());
-            ingredients_as_str.push_str(&format!("{}, and\n", ingredient.get(0).unwrap().as_str())[..]);
+            self.ingredients.push(String::from(ingredient.get(0).unwrap().as_str()));
+            ingredients_as_str.push_str(&format!("{}, and\n", &self.ingredients.last().expect("Expected ingredient").as_str())[..]);
         }
 
         // Send the ingredients to nutritionIX
@@ -171,7 +174,7 @@ impl Recipe {
 
         // Deserialize the JSON into Rust structs
         let data: NutritionResponse = serde_json::from_str(response_as_str.as_str()).expect(response_as_str.as_str());
-        self.ingredients = data.foods;
+        self.nutrients = data.foods;
 
         // Get the date
         self.date = chrono::offset::Local::now();
@@ -183,38 +186,47 @@ impl Recipe {
 impl Markdown for Recipe {
     fn as_markdown(&self) -> String {
         let mut markdown: String = String::new();
+
+        // Get URL
+        markdown.push_str(&format!("[Original Recipe]({})\n", &self.website.url).as_str());
+
+        // Get ingredients
+        for ingredient in &self.ingredients {
+            markdown.push_str(&format!("{}\n", ingredient).as_str());
+        }
+        
+        // Get directions
+        for direction in &self.directions {
+            markdown.push_str(&format!("{}\n", direction).as_str());
+        }
         
         // Get table of ingredients
         let mut table: String = String::new();
-        table.push_str("| INGREDIENT | CALORIES | PROTEIN | CARBS | FAT |\n");
+        table.push_str("\n| INGREDIENT | CALORIES | PROTEIN | CARBS | FAT |\n");
         table.push_str("| - | - | - | - | - |\n");
         let mut total_calories: f32 = 0.0;
         let mut total_protein: f32 = 0.0;
         let mut total_carbs: f32 = 0.0;
         let mut total_fat: f32 = 0.0;
-        for food in &self.ingredients {
-            table.push_str(&format!("| {} {} {} | {} | {} | {} | {} |\n", food.serving_qty, food.serving_unit, food.food_name, food.nf_calories, food.nf_protein, food.nf_total_carbohydrate, food.nf_total_fat)[..]);
+        for food in &self.nutrients {
+            table.push_str(&format!("| {} {} {} | {} | {} | {} | {} |\n", food.serving_qty, food.serving_unit, food.food_name, food.nf_calories, food.nf_protein, food.nf_total_carbohydrate, food.nf_total_fat));
             total_calories += food.nf_calories; 
             total_protein += food.nf_protein; 
             total_carbs += food.nf_total_carbohydrate; 
             total_fat += food.nf_total_fat;
         }
-        markdown.push_str(&table.as_str()[..]);
+        markdown.push_str(&table.as_str());
 
         // Get table of total nutrients
         let mut tot_table: String = String::new();
         tot_table.push_str("\n| NUTRIENT | AMOUNT |\n");
         tot_table.push_str("| - | - |\n");
-        tot_table.push_str(&format!("| CALORIES | {} |\n", total_calories)[..]);
-        tot_table.push_str(&format!("| PROTEIN | {} |\n", total_protein)[..]);
-        tot_table.push_str(&format!("| CARBS | {} |\n", total_carbs)[..]);
-        tot_table.push_str(&format!("| FAT | {} |\n", total_fat)[..]);
-        markdown.push_str(&tot_table.as_str()[..]);
+        tot_table.push_str(&format!("| CALORIES | {} |\n", total_calories));
+        tot_table.push_str(&format!("| PROTEIN | {} |\n", total_protein));
+        tot_table.push_str(&format!("| CARBS | {} |\n", total_carbs));
+        tot_table.push_str(&format!("| FAT | {} |\n", total_fat));
+        markdown.push_str(&tot_table.as_str());
 
-        // Get directions
-        for direction in &self.directions {
-            markdown.push_str(&format!("{}\n", direction).as_str()[..]);
-        }
 
         markdown
     }
