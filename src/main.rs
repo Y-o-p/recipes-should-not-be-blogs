@@ -40,8 +40,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let url: Url = Url::parse(args.url.as_str()).expect("Faulty URL");
     let mut recipe_website: Website = Website::from_scrape(url).await?;
     println!("Scraped website");
-    recipe_website.regex_remove(r#"(comments)|(COMMENTS)|(Comments)[\s\S]*"#);
+    recipe_website.regex_remove(r#"(comments)|(COMMENTS)|(Comments)[\s\S]*(Ingredients)?"#);
     println!("Removed comments");
+    let mut website_file = File::create("output/website.txt")?;
+    website_file.write_all(recipe_website.plaintext.as_bytes());
     let recipe: Recipe = Recipe::from_get(recipe_website).await?;
 
     let mut recipe_text = recipe.as_markdown();
@@ -70,12 +72,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     recipe_file.write_all(recipe_text.as_bytes());
 
     println!("Wrote recipe to: {}", full_path);
-
-    let mut website_file = File::create("output/website.txt")?;
-    website_file.write_all(recipe.website.plaintext.as_bytes());
-
-    let mut chatgpt_file = File::create("output/chatgptresponse.txt")?;
-    chatgpt_file.write_all(recipe.chatgpt_response.as_bytes());
 
     Ok(())
 }

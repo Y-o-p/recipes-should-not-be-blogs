@@ -9,6 +9,7 @@ use reqwest::{
 use chatgpt::{
     client::ChatGPT,
     types::CompletionResponse,
+    config::*,
 };
 use serde::{
     Serialize,
@@ -19,6 +20,8 @@ use std::{
     collections::HashMap,
     env,
     fs,
+    fs::File,
+    io::Write,
 };
 use serde_json::Value;
 use regex::Regex;
@@ -119,13 +122,23 @@ impl Recipe {
         // Prompt ChatGPT to get the directions and ingredients
         println!("Prompting CHATGPT...");
         let key = env::var("OPENAI_KEY")?;
-        let client = ChatGPT::new(key)?;
+        let client = ChatGPT::new_with_config(
+            key,
+            ModelConfigurationBuilder::default()
+                .temperature(1.0)
+                .engine(ChatGPTEngine::Custom("gpt-3.5-turbo-16k"))
+                .build()
+                .unwrap()
+        )?;
         let prompt = fs::read_to_string("prompt").expect("prompt expected");
+        //println!("{}\n{}", prompt, self.website.plaintext);
         let message = format!("{}\n{}", prompt, self.website.plaintext);
         let chatgpt_response = client.send_message(message).await?;
         self.chatgpt_response = chatgpt_response.message()
             .content
             .clone();
+        let mut chatgpt_file = File::create("output/chatgptresponse.txt")?;
+        chatgpt_file.write_all(self.chatgpt_response.as_bytes());
         println!("Success!");
 
         // Parse the title
